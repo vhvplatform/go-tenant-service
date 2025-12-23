@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package tenant;
+
+option go_package = "github.com/longvhv/saas-framework-go/services/tenant-service/proto";
+
+// TenantService provides tenant management functionality
+service TenantService {
+  rpc GetTenant(GetTenantRequest) returns (GetTenantResponse);
+  rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse);
+  rpc CreateTenant(CreateTenantRequest) returns (CreateTenantResponse);
+  rpc UpdateTenant(UpdateTenantRequest) returns (UpdateTenantResponse);
+  rpc DeleteTenant(DeleteTenantRequest) returns (DeleteTenantResponse);
+  rpc AddUserToTenant(AddUserToTenantRequest) returns (AddUserToTenantResponse);
+  rpc RemoveUserFromTenant(RemoveUserFromTenantRequest) returns (RemoveUserFromTenantResponse);
+}
+
+message GetTenantRequest {
+  string tenant_id = 1;
+}
+
+message GetTenantResponse {
+  Tenant tenant = 1;
+}
+
+message ListTenantsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListTenantsResponse {
+  repeated Tenant tenants = 1;
+  int32 total = 2;
+}
+
+message CreateTenantRequest {
+  string name = 1;
+  string domain = 2;
+  string subscription_tier = 3;
+}
+
+message CreateTenantResponse {
+  Tenant tenant = 1;
+}
+
+message UpdateTenantRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string domain = 3;
+  string subscription_tier = 4;
+}
+
+message UpdateTenantResponse {
+  Tenant tenant = 1;
+}
+
+message DeleteTenantRequest {
+  string tenant_id = 1;
+}
+
+message DeleteTenantResponse {
+  bool success = 1;
+}
+
+message AddUserToTenantRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+  string role = 3;
+}
+
+message AddUserToTenantResponse {
+  bool success = 1;
+}
+
+message RemoveUserFromTenantRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+}
+
+message RemoveUserFromTenantResponse {
+  bool success = 1;
+}
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+  string domain = 3;
+  string subscription_tier = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
