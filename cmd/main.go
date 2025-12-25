@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/longvhv/saas-framework-go/pkg/config"
-	"github.com/longvhv/saas-framework-go/pkg/logger"
-	"github.com/longvhv/saas-framework-go/pkg/mongodb"
+	"github.com/longvhv/saas-shared-go/config"
+	"github.com/longvhv/saas-shared-go/logger"
+	"github.com/longvhv/saas-shared-go/mongodb"
 	"github.com/longvhv/saas-framework-go/services/tenant-service/internal/grpc"
 	"github.com/longvhv/saas-framework-go/services/tenant-service/internal/handler"
 	"github.com/longvhv/saas-framework-go/services/tenant-service/internal/repository"
