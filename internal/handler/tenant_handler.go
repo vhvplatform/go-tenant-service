@@ -168,3 +168,89 @@ func (h *TenantHandler) respondError(c *gin.Context, err error) {
 	)
 	c.JSON(appErr.StatusCode, gin.H{"error": appErr})
 }
+
+// UpdateTenantConfiguration handles updating tenant configuration
+func (h *TenantHandler) UpdateTenantConfiguration(c *gin.Context) {
+	tenantID := c.Param("id")
+
+	var req domain.UpdateConfigurationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.respondError(c, errors.BadRequest("Invalid request body"))
+		return
+	}
+
+	if err := h.tenantService.UpdateTenantConfiguration(c.Request.Context(), tenantID, req.Key, req.Value, req.Type); err != nil {
+		h.respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Configuration updated successfully"})
+}
+
+// GetTenantConfiguration handles getting tenant configuration
+func (h *TenantHandler) GetTenantConfiguration(c *gin.Context) {
+	tenantID := c.Param("id")
+
+	config, err := h.tenantService.GetTenantConfiguration(c.Request.Context(), tenantID)
+	if err != nil {
+		h.respondError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": config})
+}
+
+// GetTenantUsageMetrics handles getting tenant usage metrics
+func (h *TenantHandler) GetTenantUsageMetrics(c *gin.Context) {
+	tenantID := c.Param("id")
+	period := c.DefaultQuery("period", "current")
+
+	metrics, err := h.tenantService.GetTenantUsageMetrics(c.Request.Context(), tenantID, period)
+	if err != nil {
+		h.respondError(c, err)
+		return
+	}
+
+	response := domain.UsageMetricsResponse{
+		TenantID:      metrics.TenantID,
+		APICallCount:  metrics.APICallCount,
+		StorageUsed:   metrics.StorageUsed,
+		BandwidthUsed: metrics.BandwidthUsed,
+		Period:        metrics.Period,
+		CreatedAt:     metrics.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response})
+}
+
+// GetTenantUsageHistory handles getting tenant usage history
+func (h *TenantHandler) GetTenantUsageHistory(c *gin.Context) {
+	tenantID := c.Param("id")
+	limit := 30
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	history, err := h.tenantService.GetTenantUsageHistory(c.Request.Context(), tenantID, limit)
+	if err != nil {
+		h.respondError(c, err)
+		return
+	}
+
+	var responses []domain.UsageMetricsResponse
+	for _, m := range history {
+		responses = append(responses, domain.UsageMetricsResponse{
+			TenantID:      m.TenantID,
+			APICallCount:  m.APICallCount,
+			StorageUsed:   m.StorageUsed,
+			BandwidthUsed: m.BandwidthUsed,
+			Period:        m.Period,
+			CreatedAt:     m.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": responses})
+}

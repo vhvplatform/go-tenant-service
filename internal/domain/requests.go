@@ -45,3 +45,20 @@ type ListTenantsResponse struct {
 	Page     int              `json:"page"`
 	PageSize int              `json:"page_size"`
 }
+
+// UpdateConfigurationRequest represents a configuration update request
+type UpdateConfigurationRequest struct {
+	Key   string      `json:"key" binding:"required"`
+	Value interface{} `json:"value" binding:"required"`
+	Type  string      `json:"type" binding:"required"`
+}
+
+// UsageMetricsResponse represents usage metrics in API responses
+type UsageMetricsResponse struct {
+	TenantID      string `json:"tenant_id"`
+	APICallCount  int64  `json:"api_call_count"`
+	StorageUsed   int64  `json:"storage_used"`
+	BandwidthUsed int64  `json:"bandwidth_used"`
+	Period        string `json:"period"`
+	CreatedAt     string `json:"created_at"`
+}

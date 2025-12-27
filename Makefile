@@ -87,4 +87,68 @@ install-tools: ## Install development tools
 	fi
 	@echo "Tools installed!"
 
+# Tenant-specific targets
+deploy-tenant: ## Deploy tenant-specific instance (usage: make deploy-tenant TENANT_ID=<id>)
+	@if [ -z "$(TENANT_ID)" ]; then \
+		echo "Error: TENANT_ID is required. Usage: make deploy-tenant TENANT_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Deploying tenant-specific instance for tenant: $(TENANT_ID)"
+	@docker build -t $(DOCKER_REGISTRY)/$(SERVICE_NAME):$(TENANT_ID)-$(VERSION) \
+		--build-arg TENANT_ID=$(TENANT_ID) .
+	@docker push $(DOCKER_REGISTRY)/$(SERVICE_NAME):$(TENANT_ID)-$(VERSION)
+	@echo "Tenant deployment complete!"
+
+migrate-up: ## Run database migrations up
+	@echo "Running migrations up..."
+	@echo "Note: Add your migration tool command here"
+
+migrate-down: ## Run database migrations down
+	@echo "Running migrations down..."
+	@echo "Note: Add your migration tool command here"
+
+perf-test: ## Run performance tests
+	@echo "Running performance tests..."
+	@if command -v hey > /dev/null; then \
+		hey -n 1000 -c 10 http://localhost:8083/health; \
+	else \
+		echo "hey is not installed. Install with: go install github.com/rakyll/hey@latest"; \
+	fi
+
+security-scan: ## Run security scanning with gosec
+	@echo "Running security scan..."
+	@if command -v gosec > /dev/null; then \
+		gosec -fmt=json -out=security-report.json ./...; \
+		echo "Security report generated: security-report.json"; \
+	else \
+		echo "gosec is not installed. Install with: go install github.com/securego/gosec/v2/cmd/gosec@latest"; \
+	fi
+
+bench: ## Run benchmarks
+	@echo "Running benchmarks..."
+	@go test -bench=. -benchmem ./...
+
+install-dev-tools: install-tools ## Install additional development tools
+	@echo "Installing additional development tools..."
+	@go install github.com/rakyll/hey@latest
+	@go install github.com/securego/gosec/v2/cmd/gosec@latest
+	@echo "Additional tools installed!"
+
+docker-build-optimized: ## Build optimized Docker image with build cache
+	@echo "Building optimized Docker image..."
+	@docker build --target builder --tag $(SERVICE_NAME)-builder:$(VERSION) .
+	@docker build --cache-from=$(SERVICE_NAME)-builder:$(VERSION) \
+		-t $(DOCKER_REGISTRY)/$(SERVICE_NAME):$(VERSION) .
+	@docker tag $(DOCKER_REGISTRY)/$(SERVICE_NAME):$(VERSION) $(DOCKER_REGISTRY)/$(SERVICE_NAME):latest
+	@echo "Optimized Docker image built!"
+
+docker-run-dev: ## Run Docker container in development mode with volume mounts
+	@echo "Running Docker container in development mode..."
+	@docker run --rm -it \
+		-p 8080:8080 -p 50051:50051 \
+		-v $(PWD):/app \
+		-e LOG_LEVEL=debug \
+		--name $(SERVICE_NAME)-dev \
+		$(DOCKER_REGISTRY)/$(SERVICE_NAME):latest
+
 .DEFAULT_GOAL := help

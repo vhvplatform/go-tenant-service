@@ -12,21 +12,24 @@ import (
 
 // TenantService handles tenant business logic
 type TenantService struct {
-	tenantRepo     *repository.TenantRepository
-	tenantUserRepo *repository.TenantUserRepository
-	logger         *logger.Logger
+	tenantRepo        *repository.TenantRepository
+	tenantUserRepo    *repository.TenantUserRepository
+	usageMetricsRepo  *repository.UsageMetricsRepository
+	logger            *logger.Logger
 }
 
 // NewTenantService creates a new tenant service
 func NewTenantService(
 	tenantRepo *repository.TenantRepository,
 	tenantUserRepo *repository.TenantUserRepository,
+	usageMetricsRepo *repository.UsageMetricsRepository,
 	log *logger.Logger,
 ) *TenantService {
 	return &TenantService{
-		tenantRepo:     tenantRepo,
-		tenantUserRepo: tenantUserRepo,
-		logger:         log,
+		tenantRepo:       tenantRepo,
+		tenantUserRepo:   tenantUserRepo,
+		usageMetricsRepo: usageMetricsRepo,
+		logger:           log,
 	}
 }
 
@@ -221,4 +224,88 @@ func (s *TenantService) RemoveUserFromTenant(ctx context.Context, tenantID, user
 	)
 
 	return nil
+}
+
+// UpdateTenantConfiguration updates tenant configuration settings
+func (s *TenantService) UpdateTenantConfiguration(ctx context.Context, tenantID string, key string, value interface{}, configType string) error {
+	// Get existing tenant
+	tenant, err := s.tenantRepo.FindByID(ctx, tenantID)
+	if err != nil {
+		s.logger.Error("Failed to find tenant", zap.Error(err))
+		return errors.Internal("Failed to update configuration")
+	}
+	if tenant == nil {
+		return errors.NotFound("Tenant not found")
+	}
+
+	// Initialize settings map if nil
+	if tenant.Settings == nil {
+		tenant.Settings = make(map[string]interface{})
+	}
+
+	// Update the configuration
+	tenant.Settings[key] = value
+
+	if err := s.tenantRepo.Update(ctx, tenant); err != nil {
+		s.logger.Error("Failed to update tenant configuration", zap.Error(err))
+		return errors.Internal("Failed to update configuration")
+	}
+
+	s.logger.Info("Tenant configuration updated",
+		zap.String("tenant_id", tenantID),
+		zap.String("key", key),
+	)
+
+	return nil
+}
+
+// GetTenantConfiguration retrieves tenant configuration
+func (s *TenantService) GetTenantConfiguration(ctx context.Context, tenantID string) (map[string]interface{}, error) {
+	tenant, err := s.tenantRepo.FindByID(ctx, tenantID)
+	if err != nil {
+		s.logger.Error("Failed to find tenant", zap.Error(err))
+		return nil, errors.Internal("Failed to get configuration")
+	}
+	if tenant == nil {
+		return nil, errors.NotFound("Tenant not found")
+	}
+
+	if tenant.Settings == nil {
+		return make(map[string]interface{}), nil
+	}
+
+	return tenant.Settings, nil
+}
+
+// GetTenantUsageMetrics retrieves usage metrics for a tenant
+func (s *TenantService) GetTenantUsageMetrics(ctx context.Context, tenantID string, period string) (*domain.UsageMetrics, error) {
+	metrics, err := s.usageMetricsRepo.GetMetricsByTenant(ctx, tenantID, period)
+	if err != nil {
+		s.logger.Error("Failed to get usage metrics", zap.Error(err))
+		return nil, errors.Internal("Failed to get usage metrics")
+	}
+
+	// Return empty metrics if none found
+	if metrics == nil {
+		return &domain.UsageMetrics{
+			TenantID:      tenantID,
+			APICallCount:  0,
+			StorageUsed:   0,
+			BandwidthUsed: 0,
+			Period:        period,
+		}, nil
+	}
+
+	return metrics, nil
+}
+
+// GetTenantUsageHistory retrieves historical usage metrics
+func (s *TenantService) GetTenantUsageHistory(ctx context.Context, tenantID string, limit int) ([]*domain.UsageMetrics, error) {
+	history, err := s.usageMetricsRepo.GetMetricsHistory(ctx, tenantID, limit)
+	if err != nil {
+		s.logger.Error("Failed to get usage history", zap.Error(err))
+		return nil, errors.Internal("Failed to get usage history")
+	}
+
+	return history, nil
 }

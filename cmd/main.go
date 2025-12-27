@@ -56,9 +56,10 @@ func main() {
 	// Initialize repositories
 	tenantRepo := repository.NewTenantRepository(mongoClient.Database())
 	tenantUserRepo := repository.NewTenantUserRepository(mongoClient.Database())
+	usageMetricsRepo := repository.NewUsageMetricsRepository(mongoClient.Database())
 
 	// Initialize services
-	tenantService := service.NewTenantService(tenantRepo, tenantUserRepo, log)
+	tenantService := service.NewTenantService(tenantRepo, tenantUserRepo, usageMetricsRepo, log)
 
 	// Start gRPC server
 	grpcPort := os.Getenv("TENANT_SERVICE_PORT")
@@ -113,7 +114,7 @@ func startHTTPServer(tenantService *service.TenantService, log *logger.Logger, p
 		c.JSON(http.StatusOK, gin.H{"status": "ready"})
 	})
 
-	// API routes
+	// API routes with middleware
 	v1 := router.Group("/api/v1")
 	{
 		tenants := v1.Group("/tenants")
@@ -125,6 +126,14 @@ func startHTTPServer(tenantService *service.TenantService, log *logger.Logger, p
 			tenants.DELETE("/:id", tenantHandler.DeleteTenant)
 			tenants.POST("/:id/users", tenantHandler.AddUserToTenant)
 			tenants.DELETE("/:id/users/:user_id", tenantHandler.RemoveUserFromTenant)
+			
+			// Configuration endpoints
+			tenants.GET("/:id/configuration", tenantHandler.GetTenantConfiguration)
+			tenants.PUT("/:id/configuration", tenantHandler.UpdateTenantConfiguration)
+			
+			// Usage metrics endpoints
+			tenants.GET("/:id/metrics", tenantHandler.GetTenantUsageMetrics)
+			tenants.GET("/:id/metrics/history", tenantHandler.GetTenantUsageHistory)
 		}
 	}
 

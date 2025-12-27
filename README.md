@@ -8,9 +8,14 @@
 
 ## Features
 
-- Feature 1
-- Feature 2
-- Feature 3
+- **Multi-Tenant Isolation** - Advanced isolation mechanisms with database isolation, namespace support, and data encryption options
+- **Tenant Management** - Complete CRUD operations for tenant lifecycle management
+- **Custom Configuration Management** - Flexible per-tenant configuration system with key-value storage
+- **Tenant Usage Dashboards** - Real-time usage metrics tracking API calls, storage, and bandwidth consumption
+- **Advanced API Security** - Tier-based rate limiting, API key authentication, and tenant context isolation
+- **User Management** - Associate users with tenants with role-based access
+- **RESTful API** - Clean HTTP/JSON API with comprehensive endpoints
+- **gRPC Support** - High-performance gRPC endpoints for service-to-service communication
 
 ## Prerequisites
 
@@ -68,6 +73,12 @@ make test
 
 # Run with coverage
 make test-coverage
+
+# Run benchmarks
+make bench
+
+# Run performance tests
+make perf-test
 ```
 
 ### Linting
@@ -78,11 +89,43 @@ make lint
 
 # Format code
 make fmt
+
+# Run security scan
+make security-scan
 ```
 
 ## API Documentation
 
-See [docs/API.md](docs/API.md) for API documentation.
+### Tenant Endpoints
+
+- `POST /api/v1/tenants` - Create a new tenant
+- `GET /api/v1/tenants` - List all tenants (paginated)
+- `GET /api/v1/tenants/:id` - Get tenant details
+- `PUT /api/v1/tenants/:id` - Update tenant
+- `DELETE /api/v1/tenants/:id` - Delete tenant (soft delete)
+
+### User Management Endpoints
+
+- `POST /api/v1/tenants/:id/users` - Add user to tenant
+- `DELETE /api/v1/tenants/:id/users/:user_id` - Remove user from tenant
+
+### Configuration Endpoints
+
+- `GET /api/v1/tenants/:id/configuration` - Get tenant configuration
+- `PUT /api/v1/tenants/:id/configuration` - Update tenant configuration
+
+### Usage Metrics Endpoints
+
+- `GET /api/v1/tenants/:id/metrics` - Get current usage metrics
+- `GET /api/v1/tenants/:id/metrics/history` - Get usage history
+
+### Security Features
+
+- **API Key Authentication** - Pass `X-API-Key` header or `Authorization: Bearer <token>`
+- **Tenant Context** - Include `X-Tenant-ID` and `X-Tenant-Tier` headers
+- **Rate Limiting** - Tier-based limits (Free: 60/min, Basic: 300/min, Professional: 1000/min, Enterprise: 5000/min)
+
+See [docs/API.md](docs/API.md) for detailed API documentation.
 
 ## Deployment
 
