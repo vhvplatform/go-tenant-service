@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 // UsageTracker tracks API usage metrics
 type UsageTracker struct {
 	metrics map[string]*tenantMetrics
+	mu      sync.RWMutex
 }
 
 type tenantMetrics struct {
@@ -46,21 +49,30 @@ func (ut *UsageTracker) Middleware() gin.HandlerFunc {
 
 		// Add metrics to response headers
 		c.Header("X-Request-Duration", duration.String())
-		c.Header("X-Response-Size", string(rune(responseSize)))
+		c.Header("X-Response-Size", strconv.Itoa(responseSize))
 	}
 }
 
 func (ut *UsageTracker) recordMetrics(tenantID string, apiCalls int64, bandwidth int64) {
+	ut.mu.Lock()
 	if _, exists := ut.metrics[tenantID]; !exists {
 		ut.metrics[tenantID] = &tenantMetrics{}
 	}
+	ut.mu.Unlock()
 
-	atomic.AddInt64(&ut.metrics[tenantID].apiCalls, apiCalls)
-	atomic.AddInt64(&ut.metrics[tenantID].bandwidth, bandwidth)
+	ut.mu.RLock()
+	metrics := ut.metrics[tenantID]
+	ut.mu.RUnlock()
+
+	atomic.AddInt64(&metrics.apiCalls, apiCalls)
+	atomic.AddInt64(&metrics.bandwidth, bandwidth)
 }
 
 // GetMetrics returns current metrics for a tenant
 func (ut *UsageTracker) GetMetrics(tenantID string) (apiCalls int64, bandwidth int64) {
+	ut.mu.RLock()
+	defer ut.mu.RUnlock()
+
 	if metrics, exists := ut.metrics[tenantID]; exists {
 		return atomic.LoadInt64(&metrics.apiCalls), atomic.LoadInt64(&metrics.bandwidth)
 	}

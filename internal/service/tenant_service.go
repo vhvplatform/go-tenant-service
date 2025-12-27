@@ -238,6 +238,11 @@ func (s *TenantService) UpdateTenantConfiguration(ctx context.Context, tenantID 
 		return errors.NotFound("Tenant not found")
 	}
 
+	// Validate configuration type
+	if configType != "" && !isValidConfigType(configType) {
+		return errors.BadRequest("Invalid configuration type")
+	}
+
 	// Initialize settings map if nil
 	if tenant.Settings == nil {
 		tenant.Settings = make(map[string]interface{})
@@ -254,9 +259,22 @@ func (s *TenantService) UpdateTenantConfiguration(ctx context.Context, tenantID 
 	s.logger.Info("Tenant configuration updated",
 		zap.String("tenant_id", tenantID),
 		zap.String("key", key),
+		zap.String("type", configType),
 	)
 
 	return nil
+}
+
+// isValidConfigType checks if the config type is valid
+func isValidConfigType(configType string) bool {
+	validTypes := map[string]bool{
+		"string":  true,
+		"integer": true,
+		"boolean": true,
+		"json":    true,
+		"array":   true,
+	}
+	return validTypes[configType]
 }
 
 // GetTenantConfiguration retrieves tenant configuration
