@@ -7,7 +7,6 @@ import (
 
 	"github.com/vhvplatform/go-tenant-service/internal/domain"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -109,9 +108,9 @@ func (r *UsageMetricsRepository) UpdateMetrics(ctx context.Context, tenantID str
 
 	update := bson.M{
 		"$inc": bson.M{
-			"api_call_count":  apiCalls,
-			"storage_used":    storage,
-			"bandwidth_used":  bandwidth,
+			"api_call_count": apiCalls,
+			"storage_used":   storage,
+			"bandwidth_used": bandwidth,
 		},
 		"$setOnInsert": bson.M{
 			"created_at": time.Now(),
@@ -132,11 +131,11 @@ func (r *UsageMetricsRepository) GetAggregatedMetrics(ctx context.Context, perio
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: bson.M{"period": period}}},
 		{{Key: "$group", Value: bson.M{
-			"_id":              nil,
-			"total_api_calls":  bson.M{"$sum": "$api_call_count"},
-			"total_storage":    bson.M{"$sum": "$storage_used"},
-			"total_bandwidth":  bson.M{"$sum": "$bandwidth_used"},
-			"tenant_count":     bson.M{"$sum": 1},
+			"_id":             nil,
+			"total_api_calls": bson.M{"$sum": "$api_call_count"},
+			"total_storage":   bson.M{"$sum": "$storage_used"},
+			"total_bandwidth": bson.M{"$sum": "$bandwidth_used"},
+			"tenant_count":    bson.M{"$sum": 1},
 		}}},
 	}
 
@@ -153,10 +152,10 @@ func (r *UsageMetricsRepository) GetAggregatedMetrics(ctx context.Context, perio
 
 	if len(results) == 0 {
 		return map[string]interface{}{
-			"total_api_calls":  0,
-			"total_storage":    0,
-			"total_bandwidth":  0,
-			"tenant_count":     0,
+			"total_api_calls": 0,
+			"total_storage":   0,
+			"total_bandwidth": 0,
+			"tenant_count":    0,
 		}, nil
 	}
 

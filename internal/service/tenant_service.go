@@ -12,10 +12,10 @@ import (
 
 // TenantService handles tenant business logic
 type TenantService struct {
-	tenantRepo        *repository.TenantRepository
-	tenantUserRepo    *repository.TenantUserRepository
-	usageMetricsRepo  *repository.UsageMetricsRepository
-	logger            *logger.Logger
+	tenantRepo       *repository.TenantRepository
+	tenantUserRepo   *repository.TenantUserRepository
+	usageMetricsRepo *repository.UsageMetricsRepository
+	logger           *logger.Logger
 }
 
 // NewTenantService creates a new tenant service

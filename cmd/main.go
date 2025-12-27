@@ -126,11 +126,11 @@ func startHTTPServer(tenantService *service.TenantService, log *logger.Logger, p
 			tenants.DELETE("/:id", tenantHandler.DeleteTenant)
 			tenants.POST("/:id/users", tenantHandler.AddUserToTenant)
 			tenants.DELETE("/:id/users/:user_id", tenantHandler.RemoveUserFromTenant)
-			
+
 			// Configuration endpoints
 			tenants.GET("/:id/configuration", tenantHandler.GetTenantConfiguration)
 			tenants.PUT("/:id/configuration", tenantHandler.UpdateTenantConfiguration)
-			
+
 			// Usage metrics endpoints
 			tenants.GET("/:id/metrics", tenantHandler.GetTenantUsageMetrics)
 			tenants.GET("/:id/metrics/history", tenantHandler.GetTenantUsageHistory)
