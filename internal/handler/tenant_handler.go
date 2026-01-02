@@ -253,8 +253,12 @@ func (h *TenantHandler) GetTenantUsers(c *gin.Context) {
 
 	userResponses := make([]TenantUserResponse, len(tenantUsers))
 	for i, tu := range tenantUsers {
+		idStr := ""
+		if !tu.ID.IsZero() {
+			idStr = tu.ID.Hex()
+		}
 		userResponses[i] = TenantUserResponse{
-			ID:        tu.ID.Hex(),
+			ID:        idStr,
 			TenantID:  tu.TenantID,
 			UserID:    tu.UserID,
 			Role:      tu.Role,
