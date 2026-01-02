@@ -6,28 +6,28 @@ WORKDIR /app
 # Install dependencies
 RUN apk add --no-cache git
 
-# Copy go mod files
-COPY go.mod go.sum ./
-RUN go mod download
+# 1. Copy go.mod và go.sum của cả SHARED và SERVICE để cache dependencies
+COPY go-shared/go.mod go-shared/go.sum ./go-shared/
+COPY go-tenant-service/go.mod go-tenant-service/go.sum ./go-tenant-service/
 
-# Copy source code
-COPY . .
+# 2. Download dependencies (Go sẽ tự xử lý mối quan hệ giữa các module)
+RUN cd go-tenant-service && go mod download
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o tenant-service ./cmd/main.go
+# 3. Copy toàn bộ mã nguồn cần thiết
+COPY go-shared/ ./go-shared/
+COPY go-tenant-service/ ./go-tenant-service/
 
-# Runtime stage
-FROM alpine:3.19
+# 4. Build service
+WORKDIR /app/go-tenant-service
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/bin/tenant-service ./cmd/main.go
 
+# Final stage
+FROM alpine:latest
 RUN apk --no-cache add ca-certificates tzdata
-
-WORKDIR /root/
-
-# Copy the binary from builder
-COPY --from=builder /app/tenant-service .
-
-# Expose ports
+RUN addgroup -S appgroup && adduser -S appuser -u 1000 -G appgroup
+WORKDIR /app
+RUN chown 1000:1000 /app
+COPY --from=builder --chown=1000:1000 /app/bin/user-service .
+USER 1000
 EXPOSE 50053 8083
-
-# Run the application
 CMD ["./tenant-service"]
